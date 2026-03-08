@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+- Never trust user input. Always sanitize it. Never blindly deseralize data.
+- Please reply in a concise style. Avoid unnecessary repetition or filler language.
+- When working with external frameworks, APIs, packages, providers, etc. that have their own documentation, always try to use your context7 MCP to reference the up-to-date documentation.
+- Never try fixing bugs more than three times, after the third attempted fix, roll back to the version BEFORE attempting the bug fix and write a summary .md file that details the issue
+    - Dont write quick fixes. If you need one to make something work, let me know in the Chat.
+    - Never compromise security for fixing bugs - never implement workarounds that could lead to security risks
+- Follow the repository pattern: always refer to /docs/repo.md for the general file structure of our codebase and where to find what
+    - Keep business logic in service/backend layers
+    - On every implementation or update request, first critically think about how the change can be implemented in a maintainable and consistent way within the existing codebase
+- After implementing or editing a feature, update the according documentation in /docs/technical/
+    - Where applicable, comment your code with doxygen docstrings
+    - Always keep documentation concise
+    - Never repeat code from the repository, only add canonical examples where needed
