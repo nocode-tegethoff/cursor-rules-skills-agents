@@ -5,7 +5,7 @@ description: Working on frontend components
 When working in components directory:
 
 - Always use **Tailwind** for styling (utility-first, design-token driven)
-- Use **Framer Motion** for meaningful, subtle animations (never for decoration only)
+- Use **Motion** (package `motion`, import `motion/react`) for meaningful, subtle animations and drag-and-drop (never for decoration only)
 - Follow **component naming conventions** and feature-based structure
 - Apply **modern UI/UX best practices** for clean, intuitive, accessible interfaces
 
@@ -40,19 +40,20 @@ export function Card({ title, children }: { title: string; children: React.React
 }
 ```
 
-## Framer Motion principles
+## Motion (animation & drag) principles
 
-- Use **Framer Motion** for:
+- Use **Motion** for:
   - Page transitions, modals/drawers, toasts.
   - Emphasizing hierarchy and feedback (hover/press/selection states beyond basic CSS).
+  - **Drag-and-drop** of game assets (cards, tokens); use `DraggableAsset` or `motion` with `drag`/`dragConstraints`/`onDragEnd`.
 - Prefer **variants** for complex components and consistent motion across states.
-- Animate **opacity and transforms** (`x/y/scale/rotate`) instead of layout properties.
+- Animate **opacity and transforms** (`x/y/scale/rotate`) instead of layout properties; use `layout` for smooth reflows.
 - Honor `prefers-reduced-motion` and offer non-animated fallbacks for essential interactions.
 
 Canonical motion usage:
 
 ```tsx
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 8 },

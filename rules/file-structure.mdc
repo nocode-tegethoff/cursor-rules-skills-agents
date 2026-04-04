@@ -1,0 +1,34 @@
+---
+alwaysApply: true
+---
+
+
+Whenever you are creating new files, looking for files to modify, or generally need to understand "what goes where" in this project, reference this rough outline below:
+
+/.cursor/agents/ -> Cursor **subagents** (markdown + YAML frontmatter); isolated context. See Cursor docs: Subagents.
+/__tests__/ -> all of our Vitest + react testing library stuff - unit tests for all our code
+/docs/ -> all of our documentation, from PRDs to technical docs.
+/src/ -> all the source code
+    /app/
+        /api/ -> all API routes apart from Supabase auth routes go here
+            /sessions/ -> session CRUD, join, actions, extract
+            /inventory/ -> player inventory and loadout management
+            /trader/ -> buy/sell cards
+            /profile/ -> player profile read/update
+            /quests/ -> quest listing with progress
+        pages that import features and common components. Dont implement features here.
+    /components/ -> **common** components across all pages and features
+    /features/ -> actual feature implementations. Implement the actual features here.
+    /lib/ -> backend services and business logic
+        /types.ts -> shared TS types, Zod schemas, enums
+        /supabase/ -> Supabase clients + SQL schema files (tables.sql, security.sql, functions.sql, seed.sql)
+        /game/ -> game.service, game.repo, rules (validation), scoring, rng
+        /session/ -> session.service, session.repo (lifecycle management)
+        /inventory/ -> inventory.service, inventory.repo (player cards and loadout)
+        /economy/ -> economy.service, economy.repo (M$, XP, trader, profile)
+        /quests/ -> quest.service, quest.repo
+        /effects/ -> effect registry + handler plugins
+        /realtime/ -> Supabase Realtime broadcast helpers
+    global-config.json -> global config values such as feature flags and global params
+.env -> environment variables in the format 'NEXT_PUBLIC_SUPABASE_URL=your-project-url' (no quotes)
+       Required vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY (service role / secret key; legacy name SUPABASE_SERVICE_ROLE_KEY may still appear in older docs)

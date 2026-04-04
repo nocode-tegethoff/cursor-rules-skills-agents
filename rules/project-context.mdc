@@ -1,0 +1,163 @@
+---
+alwaysApply: true
+---
+
+# Project context
+
+**Lost Business** is an online multiplayer card game based on **Lost Cities** (Reiner Knizia). You are a businessman restoring abandoned businesses (= expeditions, called "business tracks" here sometimes). Core rules follow Lost Cities; the setting and future scope are expanded. 
+
+The game is now a card-based rogue-like extraction looter where the dopamine kick is around loss aversion and the possibility to win very big: you need to bring your own loadout beyond the default cards (cards + other items) - if you "win", you extract with everything you collected during the session - other player's cards, cards "dropped" (looted) during the game, and your own loadout (minus anything you lost about your loadout). This creates a high-risk high-reward setup. However, the possibility to drop powerful or "david vs goliath" cards during the game adds the possibility that a person with a default loadout can win big against someone else with a hefty loadout by simply dropping the right cards or playing sneaky tactics. This further amplifies the dopamine kick as now you can do "zero to hero" runs.
+
+## Lost Cities → Lost Business mapping
+
+| Lost Cities           | Lost Business                    |
+|-----------------------|----------------------------------|
+| Points                | Millions of dollars (M$)         |
+| 5 expeditions         | 5 business types (to be named)   |
+| Number cards (2–10)    | Cards 2–10                       |
+| Wager cards (multipliers) | Contract cards (external investment) |
+| Expedition cost −20 pts | Row-starting cost −20M$          |
+
+**Base Lost Cities rules (adapted):** Each turn, play or discard one card then draw one. Build one column per color in strictly ascending order. Wagers/contracts are played only at the start of a column and multiply that column’s score (1→×2, 2→×3, 3→×4). Each started expedition costs 20 (points / M$) before scoring; unfinished expeditions score zero.
+
+## Extended vision (beyond classic Lost Cities)
+
+- More than 2 players per game; more card colors.
+- Global player inventory: cards and money outside sessions.
+- Special-effect cards.
+- Buy cards and bring them into a session; extract cards from a session into global inventory.
+
+## Technical
+
+- Next.js app with Supabase (standard DB + Realtime for game sessions).
+- "motion" framework for animations
+- Always expect cheaters, so any action needs to be validated (1) client side (2) server side. Game state can only be changed server-side, client side can only send requests and render the server state. Detected illegal actions need to be logged. 
+- Prioritize a simple architecture (but that is still flexible enough to accomodate future features) over a complex one
+- Hidden aspects such as draw pile, other players hands, etc. are never shared with clients and only exist server side, except of course player hand of your own authenticated account
+
+## Features
+
+### Core pages:
+
+1. Main menu with links to all other pages
+2. Application and user profile settings 
+3. Game session -> where the actual game happens
+4. Game session browser/creator -> where you can host a new session or join an existing one
+5. Player inventory -> where the player can manage all of their game items -> everything that is game-related but outside of an active session
+
+### Core gameplay loop
+
+1. Create the loadout (cards + other items) that you want to bring into your next game session from your global player inventory
+    a. Buy cards and other items from Traders if needed
+    b. Move cards and other items into your loadout
+2. Create a session or join an existing one
+3. Play the session: play your loadout, defeat your opponent(s), collect other player's cards or get card drops during the game to build the "loot" to extract
+4. "Extract" from the session: collect your reward (points=money) and add your loot to your global player inventory
+5. Expand your player profile with the loot you collected, accept or complete tasks, etc.
+
+### Session features
+
+- 2 player, 4 player, 6 player, or 8 player sessions -> for now, only implement 2 player sessions, but with flexibility to easily expand player count
+- Play cards according to usual Lost Cities rules per default. With more people, everyone has their own rows to place cards, but there is still only one shared draw pile and one deposit (discard) pile in the middle. Draw pile size scales with player count (e.g. 4 players = each card doubled in the deck)
+- Sequential player turns for 2 player; parallel player turns (4, 6, 8) are planned for future implementation (resolution order TBD)
+- Timer for each player turn to avoid lengthy sessions. **Turn timeout:** the application auto-plays the first available valid action (play or discard); games do not stall indefinitely
+- **Session end conditions:** (1) Drawing pile is empty (normal Lost Cities end), or (2) all players have surrendered
+- Effects on special cards can change the game logic during the session (e.g., being able to remove cards from a row) -> game session rules need to be stored and retrieved from the realtime database such that they can be modified server-side during runtime
+- Session end screen with summary about all players, money, cards played, etc.
+- Ability to surrender -> immediate loss/last place
+- Ability to reconnect if disconnected from session
+
+#### Winning, payout, and loot
+
+- **Winning is per business track.** Payout/loss (M$) is based on the points you score in the game (everyone gets a result based on their score). Additionally, you receive the **custom cards** of every other player who played the same business track as you and scored fewer points on that track than you (you "defeat" them on that track and loot their custom cards from that track).
+- Backend: one function determines winners per track from game session state and outputs a winner struct; a separate payout function takes that struct as input.
+- **Card drops (during session):** How custom cards enter play is defined in "Custom cards and the shared draw pile" below (design options TBD). Drops can also come from special conditions during play (hand, played rows). There are no "on death" drops—player-vs-player loot is resolved at session end via the per-track winning rule above. Dropped cards are **per player**; not first-come-first-served. What you extract: cards you defeated from others (per track) + any cards that dropped to you during the session.
+
+#### Custom cards and the shared draw pile
+
+Design challenge: one shared draw pile for all players vs per-player custom loadouts—how do loadout cards enter the game without revealing private info or breaking "draw one" fairness?
+
+**Candidate designs (to be decided):**
+
+1. **Replacement cards in the deck.** A number of "replacement" cards equal to the total custom cards across all players are mixed into the deck. When a player draws a replacement card, the application gives them one of *their own* loadout cards instead (replacement card = signal to hand out that player's next loadout card). So you only ever draw your own custom cards via the pile; deck composition stays consistent and you still draw one card per turn.
+2. **Periodic events.** At fixed intervals (e.g. every 5 turns), an event occurs where you can choose to draw one of your custom cards—e.g. the app shows you 3 of your 5 loadout cards and you pick one to add to hand. No custom cards in the physical draw pile.
+3. **Hybrid.** Guaranteed periodic events where you choose from a subset of your loadout (as in 2), plus the remaining loadout cards are mixed into the pool as replacements (as in 1).
+
+**Zero-loadout players:** If a player brings no custom cards, during any "choose from your loadout" event they get RNG-based card selection instead—e.g. a random card drop (so default-loadout players can still get lucky draws and "zero to hero" moments).
+
+### Other important features
+
+- Generally differentiate between default cards (standard lost cities deck) and custom cards; the custom cards are the ones that CAN have special effects
+- **Loadout & inventory:** No stash limit for now. Expect **max 5 custom cards** in loadout. Queue with a pre-made group is planned for the future, not in initial implementation.
+- **Other items (non-card loadout):** Effect items you carry into the game that are not playable cards (e.g. "extract cards of one track regardless of whether you won it"). May exist in v1; exact list TBD.
+- Complete tasks and quests to earn loadout items, money, and permanent buffs to your player profile (quest system to be defined)
+- Different card rarities for custom cards: classic white/green/blue/purple/orange colors for common/uncommon/rare/epic/legendary custom cards 
+- Buy and sell custom cards from/to Traders (sell at 30% of value). Trader offering depends on **player profile progress** (see Economy below).
+- Default cards are always available at 0 cost
+
+### Economy
+
+- **Faucets:** Session rewards (points/M$ + loot) and quests (to be defined).
+- **Sinks:** Sell to Trader at 30% of value. Other sinks (fees, insurance, etc.) not defined yet; to be added later.
+- **Player profile progress:** Experience points (XP) and levels 1–30, with a slight increasing exponential curve for XP required per level. Gates e.g. Trader availability/offering; level is the progress metric.
+
+### Technical (rules & integrity)
+
+- **Event sourcing:** Full action log for replay and dispute resolution.
+- **Deterministic RNG:** Draws and drops use RNG seeded by session ID so outcomes are reproducible.
+- **Turn timeout:** Auto-play first available valid action (no forfeit; game continues until draw pile empty or all surrender).
+
+### Social & safety
+
+- No in-game chat, emotes, or voice. No moderation of comms.
+- **Reports & sanctions:** Illegal actions are logged server-side. Handling of player reports and bans is **manual review** for now.
+
+## PRD (`docs/prds/prd.md`) and implementation
+
+- **Intent:** [`docs/prds/prd.md`](../../docs/prds/prd.md) is the **single canonical** functional requirements document. It is often **revised in parallel with code**—do **not** assume it is complete. Where it is silent or outdated, triangulate with `docs/technical/`, API validation (Zod), user-stated acceptance criteria, and the Rules below.
+- **Keep the PRD aligned:** Whenever you **implement, extend, or fix** product behavior, ask whether the relevant REQ-* section in **`docs/prds/prd.md`** needs updating. If behavior diverges, **update the PRD** (or add a short “gap / TBD” note in the Deferred section) so intent and implementation do not drift apart.
+- **Plan mode (large work):** For a substantial feature or refactor, the **first** todo in the plan MUST be **PRD alignment**—e.g. id `align-prd`, content: review and update `docs/prds/prd.md` (scope, REQ-* lines, gaps). Subsequent todos then cover implementation, tests, and other docs.
+
+## Rules
+
+Ongoing constraints and design principles. Not checkable deliverables — they apply to all implementation. PRDs reference these where relevant.
+
+**Referenced by:** `docs/prds/prd.md`
+
+---
+
+### Platform
+
+- **R-PLAT-01:** The system shall never expose another player's private data (hand, draw pile position, loadout contents) to any other authenticated user via API or Realtime.
+- **R-PLAT-02:** Game-state mutations shall only occur server-side; the client shall never mutate game state.
+- **R-PLAT-03:** Game-mutating operations shall be exposed only through Next.js API routes under `/src/api/`.
+- **R-PLAT-04:** Business logic shall live in service modules under `/src/lib/`; API routes shall act as thin validation-and-dispatch layers.
+- **R-PLAT-05:** All direct database access shall be in repository modules (repository pattern); not in service or API code.
+- **R-PLAT-06:** Where a service modifies game state, the corresponding action log entry shall be written atomically in the same database transaction.
+- **R-PLAT-07:** The system shall perform client-side validation to prevent obviously illegal UI interactions before an action is sent to the server.
+- **R-PLAT-08:** The system shall re-validate every incoming action server-side against the authoritative game state before applying it, regardless of client-side result.
+- **R-PLAT-09:** The system shall never trust client-supplied game state; all state shall be read from the server-side store.
+- **R-PLAT-10:** The system shall sanitise and type-validate all API request payloads before processing.
+- **R-PLAT-11:** The action log shall be append-only; no log entry shall ever be updated or deleted.
+- **R-PLAT-12:** The RNG seed and RNG state shall never be exposed to clients.
+- **R-PLAT-13:** Each player's hand shall be broadcast only to that player's authenticated channel; hands shall never be included in the broadcast to all players.
+- **R-PLAT-14:** The system shall never forfeit or eliminate a player solely due to a turn timeout; the session shall continue.
+
+---
+
+## #Game Session
+
+- **R-SESSION-01:** The system shall never reveal a player's loadout card choices or loadout queue to any other player.
+- **R-SESSION-02:** The system shall re-evaluate all subsequent actions against the current (possibly modified) game rules document.
+
+---
+
+### Meta-Game
+
+- **R-META-01:** Default cards shall always be available; the system shall never remove them from a player's inventory.
+- **R-META-02:** Session payout shall be the primary M$ faucet; quests shall be the secondary faucet.
+- **R-META-03:** Selling cards to the Trader shall be the primary M$ sink.
+- **R-META-04:** The system shall never decrease a player's level.
+
+
+

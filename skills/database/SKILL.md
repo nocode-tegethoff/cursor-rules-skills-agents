@@ -44,12 +44,12 @@ description: When working on database components or interactions
 
 ## Migrations & SQL files
 
-- Treat `/src/sql/*.sql` as the **single source of truth** for the schema and security.
+- Treat `/src/lib/supabase/*.sql` as the **single source of truth** for the schema and security.
 - Every structural change MUST:
   - Be reflected in the appropriate SQL file (tables, indexes, policies, functions).
   - Be **idempotent** or clearly versioned so it can run safely in CI/deploys.
 - Never patch the database manually in production without also updating the SQL migration files.
-- Always keep the SQL files in `/src/sql/` up to date:
+- Always keep the SQL files in `/src/lib/supabase/` up to date:
   - `tables.sql` for all table definitions.
   - `security.sql` for all RLS policies.
   - `functions.sql` for all functions and triggers.

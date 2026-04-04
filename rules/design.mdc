@@ -1,0 +1,13 @@
+---
+description: Rules about the game's theme and design - rules when working on frontend, visual elements, or game cards
+alwaysApply: false
+---
+
+## Business Tracks
+
+To mirror the five colors of the original game, we need distinct industries that offer great visual progression.
+1. Yellow: Solar Energy & Renewables: Harnessing power from the sun, moving from a single panel to a futuristic energy utopia.
+2. Blue: Deep Sea Logistics & Trade: Maritime expansion, starting from a small coastal dock and evolving into a massive oceanic mega-port.
+3. White: Aerospace Engineering: Reaching for the skies and beyond, beginning in a modest hangar and culminating in a deep-space launch.
+4. Green: Eco-Terraforming & Advanced Agriculture: Bringing life to barren places, starting with a single greenhouse and ending in a sprawling, lush eco-dome city.
+5. Red: Deep Earth Mining: Extracting precious resources, moving from a dusty surface shaft down into a glowing, crystalline subterranean vault.

@@ -14,7 +14,7 @@ Systematically set up a new feature from initial planning through to implementat
    - Clarify feature scope and goals within context of existing features
    - Identify user stories and acceptance criteria
    - Plan technical approach within context of existing architecture
-   - Document requirements, user stories, and technical approach in /docs/requirements/<name-of-feature>.md
+   - Add or extend functional requirements in [`docs/prds/prd.md`](../../docs/prds/prd.md) (and `docs/technical/` for design); avoid new standalone PRD files unless the product owner explicitly splits them.
 
 2. **Create feature branch**
    - Branch from main/develop

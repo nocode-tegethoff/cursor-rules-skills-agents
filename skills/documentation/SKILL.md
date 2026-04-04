@@ -17,6 +17,7 @@ Use this skill whenever:
 - The user asks you to create or update docs in `/docs`, `.cursor/rules`, `.cursor/skills` or other markdown guides.
 - Your code changes modify behavior, data models, APIs, or architecture.
 - Existing docs clearly contradict the current code.
+- **Product behavior changed:** consider updating the relevant REQ-* lines in [`docs/prds/prd.md`](../../docs/prds/prd.md) (see `.cursor/rules/project-context.mdc` — **PRD and implementation**); use the PRD-docs skill for structure and EARS style.
 
 ## Sources of truth
 
